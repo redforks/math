@@ -4,15 +4,12 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/redforks/hal"
 )
 
 const (
 	tag = "math-rate"
-)
-
-var (
-	// return current time, set to test stub during unit test.
-	now func() time.Time = time.Now
 )
 
 // Limiter is a rate control that not allow things to happen more than n times
@@ -39,7 +36,7 @@ func NewLimiter(n int, m time.Duration) *Limiter {
 func (l *Limiter) Accept() bool {
 	l.l.Lock()
 
-	t := now()
+	t := hal.Now()
 	r := t.Sub(l.ring[l.tail]) > l.d
 
 	if r {
