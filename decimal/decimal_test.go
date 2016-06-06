@@ -2,6 +2,7 @@ package decimal_test
 
 import (
 	"fmt"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -145,15 +146,119 @@ var _ = Describe("Decimal", func() {
 			Entry("Shrink scale round down", "3.1", "0.04", "3.1", 1),
 		)
 
-	})
+		DescribeTable("Subtract", func(a, b, c string) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
 
-	XContext("Subtract", func() {
+			z := x.Subtract(y)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("Two positive integers", "4", "3", "1"),
+			Entry("Positive negative integers", "-4", "3", "-7"),
+			Entry("Scale equaled", "2.2", "1.1", "1.1"),
+			Entry("Scale not equal", "4.5", "1", "3.5"),
+			Entry("Add up to integer", "2.8", "1.2", "1.6"),
+			Entry("fragment", "0.0007", "0.0003", "0.0004"),
+			Entry("fragment and integer", "300", "0.3", "299.7"),
+		)
 
-	})
+		DescribeTable("SubtractToScale", func(a, b, c string, scale int) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
 
-	XContext("Multiply", func() {})
+			z := x.SubtractToScale(y, scale)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("Scale matched", "1.2", "0.2", "1.0", 1),
+			Entry("Extend scale", "1.2", "0.2", "1.00", 2),
+			Entry("Shrink scale round up", "1", "0.4", "1", 0),
+			Entry("Shrink scale round down", "1", "0.6", "0", 0),
+		)
 
-	XContext("Div", func() {
+		DescribeTable("Multiply", func(a, b, c string) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			z := x.Multiply(y)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("zero", "3", "0", "0"),
+			Entry("Integers", "3", "4", "12"),
+			Entry("Integer and fragment", "3", "0.4", "1.2"),
+			Entry("fragments", "0.3", "0.5", "0.2"),
+			Entry("negative fragement", "-0.3", "0.5", "-0.2"),
+			Entry("fragments round down", "0.3", "0.4", "0.1"),
+			Entry("big and little 1", "-100", "0.01", "-1.00"),
+			Entry("little and little", "-0.001", "-0.01", "0.000"),
+			Entry("integer round up", "40", "50", "2000"),
+		)
+
+		DescribeTable("MultiplyToScale", func(a, b, c string, scale int) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			z := x.MultiplyToScale(y, scale)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("Scale not changed", "1.2", "0.6", "0.7", 1),
+			Entry("extend scale", "1.2", "0.6", "0.72", 2),
+			Entry("shrink scale round up", "1.5555", "1", "1.6", 1),
+			Entry("shrink scale round down", "1.455", "1", "1", 0),
+			Entry("shrink scale round down 2", "1.445", "0.1", "0.14", 2),
+			Entry("extend scale more", "1.0", "2", "2.000", 3),
+		)
+
+		DescribeTable("Div", func(a, b, c string) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			z := x.Div(y)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("integer div", "9", "3", "3"),
+			Entry("integer div 2", "1", "4", "0"),
+			Entry("integer div to fragment round up", "1", "4.0", "0.3"),
+			Entry("integer div to fragment round down", "1", "3.0", "0.3"),
+			Entry("div with nearest number", "1", "1.00001", "0.99999"),
+			Entry("div with small number", "100000", "3", "33333"),
+			Entry("div with large number 1", "5", "6000", "0"),
+			Entry("div with large number 2", "5.0", "6000", "0.0"),
+			Entry("div with large number 3", "5.0000", "6000", "0.0008"),
+			Entry("negative div to zero", "-1", "3", "0"),
+			Entry("negative div to fragment", "-1", "6.0", "-0.2"),
+			Entry("div means multiply", "1", "0.25", "4.00"),
+		)
+
+		It("div by zero", func() {
+			Ω(func() {
+				decimal.FromInt(1).Div(decimal.FromInt(0))
+			}).Should(Panic())
+		})
+
+		DescribeTable("DivToScale", func(a, b, c string, scale int) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			z := x.DivToScale(y, scale)
+			Ω(z.String()).Should(Equal(c))
+		},
+			Entry("scale not changed", "9", "3", "3", 0),
+			Entry("expand scale", "10", "4", "2.50", 2),
+			Entry("shrink scale round up", "1.454", "1", "1.5", 1),
+			Entry("shrink scale round down", "1.454", "1", "1.45", 2),
+		)
 
 	})
 
@@ -170,7 +275,107 @@ var _ = Describe("Decimal", func() {
 		Entry("Shrink scale round down negative", "-3.44", 1, "-3.4"),
 	)
 
-	XContext("GetZero", func() {
-		// get all scale of zeros
+	Context("GetZero", func() {
+		for i := 0; i < 9; i++ {
+			It(strconv.Itoa(i), func() {
+				d := decimal.GetZero(i)
+				// TODO: compare to zero
+				Ω(d.Scale()).Should(Equal(uint8(i)))
+			})
+		}
+	})
+
+	Context("Compare", func() {
+		DescribeTable("Cmp", func(a, b string, r int) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.Cmp(y)).Should(Equal(r))
+		},
+			Entry("Equal has the same scale", "0", "0", 0),
+			Entry("Equal has different scale", "1.00", "1.000", 0),
+			Entry("Less than", "1", "9", -1),
+			Entry("Greater than", "2.1", "2", 1),
+		)
+
+		DescribeTable("LessThan", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.LT(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", false),
+			Entry("less", "0.0", "1.00", true),
+			Entry("greater", "0.01", "0.00", false),
+		)
+
+		DescribeTable("GreaterThan", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.GT(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", false),
+			Entry("less", "0.0", "1.00", false),
+			Entry("greater", "0.01", "0.00", true),
+		)
+
+		DescribeTable("LessTharOrEqual", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.LTE(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", true),
+			Entry("less", "0.0", "1.00", true),
+			Entry("greater", "0.01", "0.00", false),
+		)
+
+		DescribeTable("GreaterThanOrEqual", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.GTE(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", true),
+			Entry("less", "0.0", "1.00", false),
+			Entry("greater", "0.01", "0.00", true),
+		)
+
+		DescribeTable("Equal", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.EQ(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", true),
+			Entry("less", "0.0", "1.00", false),
+			Entry("greater", "0.01", "0.00", false),
+		)
+
+		DescribeTable("NotEqual", func(a, b string, r bool) {
+			x, err := decimal.FromString(a)
+			Ω(err).Should(Succeed())
+			y, err := decimal.FromString(b)
+			Ω(err).Should(Succeed())
+
+			Ω(x.NE(y)).Should(Equal(r))
+		},
+			Entry("Equal", "0.0", "0.00", false),
+			Entry("less", "0.0", "1.00", true),
+			Entry("greater", "0.01", "0.00", true),
+		)
 	})
 })

@@ -180,7 +180,121 @@ func (d Decimal) AddToScale(other Decimal, scale int) Decimal {
 	return d.Add(other).Round(scale)
 }
 
-var tenth = [9]int64{1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000}
+// Subtract the other value.
+func (d Decimal) Subtract(other Decimal) Decimal {
+	return d.Add(other.Negate())
+}
+
+// SubtractToScale the other value to specific scale.
+func (d Decimal) SubtractToScale(other Decimal, scale int) Decimal {
+	return d.AddToScale(other.Negate(), scale)
+}
+
+// Multiply the other value.
+func (d Decimal) Multiply(other Decimal) Decimal {
+	return d.MultiplyToScale(other, max(d.scale, other.scale))
+}
+
+// MultiplyToScale the other value and round to specific scale
+func (d Decimal) MultiplyToScale(other Decimal, scale int) Decimal {
+	digits := d.digits * other.digits
+	scaleDiff := int(d.scale) + int(other.scale) - scale
+	switch {
+	case scaleDiff > 0:
+		digits /= powerOf10(scaleDiff - 1)
+		digits = roundLastDecimalBit(digits)
+	case scaleDiff < 0:
+		digits *= powerOf10(-scaleDiff)
+	}
+	return Decimal{digits, uint8(scale)}
+}
+
+// Div the other value, scale use max scale of current and other decimal.
+func (d Decimal) Div(other Decimal) Decimal {
+	return d.DivToScale(other, max(d.scale, other.scale))
+}
+
+// DivToScale the other value and round result to specific scale.
+func (d Decimal) DivToScale(other Decimal, scale int) Decimal {
+	scaleDiff := scale - (int(d.scale) - int(other.scale))
+	digits := d.digits
+	if scaleDiff > 0 {
+		digits *= powerOf10(scaleDiff + 1)
+		digits /= other.digits
+		digits = roundLastDecimalBit(digits)
+	} else {
+		digits /= other.digits
+		if scaleDiff < 0 {
+			scaleDiff = -scaleDiff
+			digits /= powerOf10(scaleDiff - 1)
+			digits = roundLastDecimalBit(digits)
+		}
+	}
+	return Decimal{digits, uint8(scale)}
+}
+
+// Cmp the other value return -1 if < other, 1 if > other, 0 if equal.
+// Cmp ignore scale, so 0.00 equals to 0
+func (d Decimal) Cmp(other Decimal) int {
+	sub := d.Subtract(other)
+	switch {
+	case sub.digits > 0:
+		return 1
+	case sub.digits < 0:
+		return -1
+	default:
+		return 0
+	}
+}
+
+// LessThan returns true if current value less than other
+func (d Decimal) LT(other Decimal) bool {
+	return d.Cmp(other) < 0
+}
+
+// GreaterThan returns true if current value greater than other.
+func (d Decimal) GT(other Decimal) bool {
+	return d.Cmp(other) > 0
+}
+
+// LTE returns true if current value less or equal to other.
+func (d Decimal) LTE(other Decimal) bool {
+	return d.Cmp(other) <= 0
+}
+
+// GTE returns true if current value greater or equal to other.
+func (d Decimal) GTE(other Decimal) bool {
+	return d.Cmp(other) >= 0
+}
+
+// EQ returns true if current value equals to other.
+func (d Decimal) EQ(other Decimal) bool {
+	return d.Cmp(other) == 0
+}
+
+// NE returns true if current value not equals to other.
+func (d Decimal) NE(other Decimal) bool {
+	return d.Cmp(other) != 0
+}
+
+func GetZero(scale int) Decimal {
+	if err := checkScale(scale); err != nil {
+		panic(err.Error())
+	}
+
+	return Decimal{0, uint8(scale)}
+}
+
+func max(a, b uint8) int {
+	if a > b {
+		return int(a)
+	}
+	return int(b)
+}
+
+var tenth = [18]int64{1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000,
+	10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000,
+	10000000000000000, 100000000000000000}
 
 func powerOf10(n int) int64 {
 	return tenth[n]
