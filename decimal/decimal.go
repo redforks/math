@@ -123,7 +123,7 @@ func (d Decimal) Scale() uint8 {
 }
 
 // ToInt convert current value to int, round tenth fragment.
-func (d Decimal) ToInt() int64 {
+func (d Decimal) Int64() int64 {
 	if d.scale == 0 {
 		return d.digits
 	}
@@ -156,7 +156,7 @@ func (d Decimal) Round(scale int) Decimal {
 }
 
 // Negate returns negative value
-func (d Decimal) Negate() Decimal {
+func (d Decimal) Neg() Decimal {
 	return Decimal{-d.digits, d.scale}
 }
 
@@ -181,22 +181,22 @@ func (d Decimal) AddToScale(other Decimal, scale int) Decimal {
 }
 
 // Subtract the other value.
-func (d Decimal) Subtract(other Decimal) Decimal {
-	return d.Add(other.Negate())
+func (d Decimal) Sub(other Decimal) Decimal {
+	return d.Add(other.Neg())
 }
 
 // SubtractToScale the other value to specific scale.
-func (d Decimal) SubtractToScale(other Decimal, scale int) Decimal {
-	return d.AddToScale(other.Negate(), scale)
+func (d Decimal) SubToScale(other Decimal, scale int) Decimal {
+	return d.AddToScale(other.Neg(), scale)
 }
 
 // Multiply the other value.
-func (d Decimal) Multiply(other Decimal) Decimal {
-	return d.MultiplyToScale(other, max(d.scale, other.scale))
+func (d Decimal) Mul(other Decimal) Decimal {
+	return d.MulToScale(other, max(d.scale, other.scale))
 }
 
 // MultiplyToScale the other value and round to specific scale
-func (d Decimal) MultiplyToScale(other Decimal, scale int) Decimal {
+func (d Decimal) MulToScale(other Decimal, scale int) Decimal {
 	digits := d.digits * other.digits
 	scaleDiff := int(d.scale) + int(other.scale) - scale
 	switch {
@@ -236,7 +236,7 @@ func (d Decimal) DivToScale(other Decimal, scale int) Decimal {
 // Cmp the other value return -1 if < other, 1 if > other, 0 if equal.
 // Cmp ignore scale, so 0.00 equals to 0
 func (d Decimal) Cmp(other Decimal) int {
-	sub := d.Subtract(other)
+	sub := d.Sub(other)
 	switch {
 	case sub.digits > 0:
 		return 1
@@ -277,7 +277,7 @@ func (d Decimal) NE(other Decimal) bool {
 	return d.Cmp(other) != 0
 }
 
-func GetZero(scale int) Decimal {
+func Zero(scale int) Decimal {
 	if err := checkScale(scale); err != nil {
 		panic(err.Error())
 	}

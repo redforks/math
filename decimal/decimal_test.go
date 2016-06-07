@@ -89,7 +89,7 @@ var _ = Describe("Decimal", func() {
 		d, err := decimal.FromString(s)
 		Ω(err).Should(Succeed())
 
-		Ω(d.ToInt()).Should(Equal(exp))
+		Ω(d.Int64()).Should(Equal(exp))
 	},
 		Entry("No fragment", "345", int64(345)),
 		Entry("No fragment negative", "-345", int64(-345)),
@@ -105,7 +105,7 @@ var _ = Describe("Decimal", func() {
 		DescribeTable("Negate", func(s, exp string) {
 			d, err := decimal.FromString(s)
 			Ω(err).Should(Succeed())
-			Ω(d.Negate().String()).Should(Equal(exp))
+			Ω(d.Neg().String()).Should(Equal(exp))
 		},
 			Entry("Zero", "0", "0"),
 			Entry("Zero 2", "0.00", "0.00"),
@@ -152,7 +152,7 @@ var _ = Describe("Decimal", func() {
 			y, err := decimal.FromString(b)
 			Ω(err).Should(Succeed())
 
-			z := x.Subtract(y)
+			z := x.Sub(y)
 			Ω(z.String()).Should(Equal(c))
 		},
 			Entry("Two positive integers", "4", "3", "1"),
@@ -170,7 +170,7 @@ var _ = Describe("Decimal", func() {
 			y, err := decimal.FromString(b)
 			Ω(err).Should(Succeed())
 
-			z := x.SubtractToScale(y, scale)
+			z := x.SubToScale(y, scale)
 			Ω(z.String()).Should(Equal(c))
 		},
 			Entry("Scale matched", "1.2", "0.2", "1.0", 1),
@@ -185,7 +185,7 @@ var _ = Describe("Decimal", func() {
 			y, err := decimal.FromString(b)
 			Ω(err).Should(Succeed())
 
-			z := x.Multiply(y)
+			z := x.Mul(y)
 			Ω(z.String()).Should(Equal(c))
 		},
 			Entry("zero", "3", "0", "0"),
@@ -205,7 +205,7 @@ var _ = Describe("Decimal", func() {
 			y, err := decimal.FromString(b)
 			Ω(err).Should(Succeed())
 
-			z := x.MultiplyToScale(y, scale)
+			z := x.MulToScale(y, scale)
 			Ω(z.String()).Should(Equal(c))
 		},
 			Entry("Scale not changed", "1.2", "0.6", "0.7", 1),
@@ -278,7 +278,7 @@ var _ = Describe("Decimal", func() {
 	Context("GetZero", func() {
 		for i := 0; i < 9; i++ {
 			It(strconv.Itoa(i), func() {
-				d := decimal.GetZero(i)
+				d := decimal.Zero(i)
 				// TODO: compare to zero
 				Ω(d.Scale()).Should(Equal(uint8(i)))
 			})
