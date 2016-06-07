@@ -155,6 +155,18 @@ func (d Decimal) Round(scale int) Decimal {
 	return Decimal{digits, uint8(scale)}
 }
 
+// Sign returns 1 if current value greater than 0, -1 if less than 0, 0 if equals to 0.
+func (d Decimal) Sign() int {
+	switch {
+	case d.digits > 0:
+		return 1
+	case d.digits < 0:
+		return -1
+	default:
+		return 0
+	}
+}
+
 // Negate returns negative value
 func (d Decimal) Neg() Decimal {
 	return Decimal{-d.digits, d.scale}
@@ -275,6 +287,11 @@ func (d Decimal) EQ(other Decimal) bool {
 // NE returns true if current value not equals to other.
 func (d Decimal) NE(other Decimal) bool {
 	return d.Cmp(other) != 0
+}
+
+// IsZero returns true if the value is 0, no matter what scale is.
+func (d Decimal) IsZero() bool {
+	return d.digits == 0
 }
 
 func Zero(scale int) Decimal {

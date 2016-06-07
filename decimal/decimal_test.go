@@ -279,13 +279,34 @@ var _ = Describe("Decimal", func() {
 		for i := 0; i < 9; i++ {
 			It(strconv.Itoa(i), func() {
 				d := decimal.Zero(i)
-				// TODO: compare to zero
+				Ω(d.EQ(decimal.FromInt(0))).Should(BeTrue())
 				Ω(d.Scale()).Should(Equal(uint8(i)))
 			})
 		}
 	})
 
+	DescribeTable("IsZero", func(s string, is bool) {
+		d, err := decimal.FromString(s)
+		Ω(err).Should(Succeed())
+
+		Ω(d.IsZero()).Should(Equal(is))
+	},
+		Entry("is", "0.00", true),
+		Entry("not", "0.01", false),
+	)
+
 	Context("Compare", func() {
+		DescribeTable("Sign", func(s string, sign int) {
+			d, err := decimal.FromString(s)
+			Ω(err).Should(Succeed())
+
+			Ω(d.Sign()).Should(Equal(sign))
+		},
+			Entry("Zero", "0", 0),
+			Entry("Positive", "1.333", 1),
+			Entry("Negative", "-2.3", -1),
+		)
+
 		DescribeTable("Cmp", func(a, b string, r int) {
 			x, err := decimal.FromString(a)
 			Ω(err).Should(Succeed())
