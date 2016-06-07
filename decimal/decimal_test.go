@@ -64,6 +64,15 @@ var _ = Describe("Decimal", func() {
 		Ω(d.GoString()).Should(Equal("3.30m"))
 	})
 
+	It("Valuer", func() {
+		d, err := decimal.FromString("3.33")
+		Ω(err).Should(Succeed())
+
+		v, err := d.Value()
+		Ω(v).Should(Equal("3.33"))
+		Ω(err).Should(Succeed())
+	})
+
 	DescribeTable("ShortString", func(str, exp string) {
 		d, err := decimal.FromString(str)
 		Ω(err).Should(Succeed())

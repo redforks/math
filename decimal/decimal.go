@@ -1,6 +1,7 @@
 package decimal
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"strings"
 
@@ -292,6 +293,12 @@ func (d Decimal) NE(other Decimal) bool {
 // IsZero returns true if the value is 0, no matter what scale is.
 func (d Decimal) IsZero() bool {
 	return d.digits == 0
+}
+
+// Value implement database/sql/driver.Valuer interface. Return decimal value as string,
+// actually an alias of String() method.
+func (d Decimal) Value() (driver.Value, error) {
+	return d.String(), nil
 }
 
 func Zero(scale int) Decimal {
