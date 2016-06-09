@@ -81,6 +81,7 @@ var _ = Describe("Decimal", func() {
 		Entry("No ending zero", "3.4", "3.4"),
 		Entry("Ending integer zeros", "300", "300"),
 		Entry("Ending fragment zeros", "3.00", "3"),
+		Entry("Zero", "0.00", "0"),
 	)
 
 	DescribeTable("FromInt", func(i int64) {

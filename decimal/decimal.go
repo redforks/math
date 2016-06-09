@@ -110,6 +110,10 @@ func (d Decimal) GoString() string {
 // ShortString convert current value to string, removing ending 0s.
 // Such as 3.00, returns 3.
 func (d Decimal) ShortString() string {
+	if d.IsZero() {
+		return "0"
+	}
+
 	r := d.String()
 	if d.scale == 0 {
 		return r
