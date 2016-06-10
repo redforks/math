@@ -1,7 +1,7 @@
 package rate
 
 import (
-	"spork/testing/reset"
+	"github.com/redforks/testing/reset"
 	"time"
 
 	bdd "github.com/onsi/ginkgo"
