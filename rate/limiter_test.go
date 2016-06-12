@@ -1,8 +1,9 @@
 package rate
 
 import (
-	"github.com/redforks/testing/reset"
 	"time"
+
+	"github.com/redforks/testing/reset"
 
 	bdd "github.com/onsi/ginkgo"
 	"github.com/redforks/hal/timeth"
