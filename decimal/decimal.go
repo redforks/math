@@ -63,7 +63,7 @@ func FromStringWithScale(str string, scale int) (Decimal, error) {
 	} else {
 		scale = actScale
 	}
-	if err := checkScale(scale); err != nil {
+	if err = checkScale(scale); err != nil {
 		return Decimal{}, err
 	}
 
@@ -127,7 +127,7 @@ func (d Decimal) Scale() uint8 {
 	return d.scale
 }
 
-// ToInt convert current value to int, round tenth fragment.
+// Int64 convert current value to int64, round tenth fragment.
 func (d Decimal) Int64() int64 {
 	if d.scale == 0 {
 		return d.digits
@@ -172,7 +172,7 @@ func (d Decimal) Sign() int {
 	}
 }
 
-// Negate returns negative value
+// Neg returns negative value
 func (d Decimal) Neg() Decimal {
 	return Decimal{-d.digits, d.scale}
 }
@@ -197,22 +197,22 @@ func (d Decimal) AddToScale(other Decimal, scale int) Decimal {
 	return d.Add(other).Round(scale)
 }
 
-// Subtract the other value.
+// Sub subtract the other value.
 func (d Decimal) Sub(other Decimal) Decimal {
 	return d.Add(other.Neg())
 }
 
-// SubtractToScale the other value to specific scale.
+// SubToScale subtract the other value to specific scale.
 func (d Decimal) SubToScale(other Decimal, scale int) Decimal {
 	return d.AddToScale(other.Neg(), scale)
 }
 
-// Multiply the other value.
+// Mul multiply the other value.
 func (d Decimal) Mul(other Decimal) Decimal {
 	return d.MulToScale(other, max(d.scale, other.scale))
 }
 
-// MultiplyToScale the other value and round to specific scale
+// MulToScale multiply the other value and round to specific scale
 func (d Decimal) MulToScale(other Decimal, scale int) Decimal {
 	digits := d.digits * other.digits
 	scaleDiff := int(d.scale) + int(other.scale) - scale
@@ -264,12 +264,12 @@ func (d Decimal) Cmp(other Decimal) int {
 	}
 }
 
-// LessThan returns true if current value less than other
+// LT returns true if current value less than other
 func (d Decimal) LT(other Decimal) bool {
 	return d.Cmp(other) < 0
 }
 
-// GreaterThan returns true if current value greater than other.
+// GT returns true if current value greater than other.
 func (d Decimal) GT(other Decimal) bool {
 	return d.Cmp(other) > 0
 }
@@ -305,6 +305,7 @@ func (d Decimal) Value() (driver.Value, error) {
 	return d.String(), nil
 }
 
+// Zero returns zero decimal value with specific scale.
 func Zero(scale int) Decimal {
 	if err := checkScale(scale); err != nil {
 		panic(err.Error())

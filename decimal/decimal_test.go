@@ -8,9 +8,26 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/redforks/math/decimal"
+	"github.com/redforks/testing/matcher"
 )
 
 var _ = Describe("Decimal", func() {
+	toDecimal2 := func(a, b string) (x, y decimal.Decimal) {
+		Ω(decimal.FromString(a)).Should(matcher.Save(&x))
+		Ω(decimal.FromString(b)).Should(matcher.Save(&y))
+		return
+	}
+
+	assertBinOp := func(a, b string, expected interface{}, op func(x, y decimal.Decimal) interface{}) {
+		if s, ok := expected.(string); ok {
+			var d decimal.Decimal
+			Ω(decimal.FromString(s)).Should(matcher.Save(&d))
+			expected = d
+		}
+		x, y := toDecimal2(a, b)
+		Ω(op(x, y)).Should(Equal(expected))
+	}
+
 	DescribeTable("FromString", func(s string) {
 		d, err := decimal.FromString(s)
 		Ω(err).Should(Succeed())
@@ -124,13 +141,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Add", func(a, b, c string) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.Add(y)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.Add(y)
+			})
 		},
 			Entry("Two positive integers", "3", "4", "7"),
 			Entry("Positive negative integers", "3", "-4", "-1"),
@@ -142,13 +155,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("AddToScale", func(a, b, c string, scale int) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.AddToScale(y, scale)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.AddToScale(y, scale)
+			})
 		},
 			Entry("Scale not changed", "3.10", "4.01", "7.11", 2),
 			Entry("Extend scale", "3.10", "1", "4.100", 3),
@@ -157,13 +166,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Subtract", func(a, b, c string) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.Sub(y)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.Sub(y)
+			})
 		},
 			Entry("Two positive integers", "4", "3", "1"),
 			Entry("Positive negative integers", "-4", "3", "-7"),
@@ -175,13 +180,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("SubtractToScale", func(a, b, c string, scale int) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.SubToScale(y, scale)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.SubToScale(y, scale)
+			})
 		},
 			Entry("Scale matched", "1.2", "0.2", "1.0", 1),
 			Entry("Extend scale", "1.2", "0.2", "1.00", 2),
@@ -190,13 +191,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Multiply", func(a, b, c string) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.Mul(y)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.Mul(y)
+			})
 		},
 			Entry("zero", "3", "0", "0"),
 			Entry("Integers", "3", "4", "12"),
@@ -210,13 +207,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("MultiplyToScale", func(a, b, c string, scale int) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.MulToScale(y, scale)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.MulToScale(y, scale)
+			})
 		},
 			Entry("Scale not changed", "1.2", "0.6", "0.7", 1),
 			Entry("extend scale", "1.2", "0.6", "0.72", 2),
@@ -227,13 +220,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Div", func(a, b, c string) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.Div(y)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.Div(y)
+			})
 		},
 			Entry("integer div", "9", "3", "3"),
 			Entry("integer div 2", "1", "4", "0"),
@@ -256,13 +245,9 @@ var _ = Describe("Decimal", func() {
 		})
 
 		DescribeTable("DivToScale", func(a, b, c string, scale int) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			z := x.DivToScale(y, scale)
-			Ω(z.String()).Should(Equal(c))
+			assertBinOp(a, b, c, func(x, y decimal.Decimal) interface{} {
+				return x.DivToScale(y, scale)
+			})
 		},
 			Entry("scale not changed", "9", "3", "3", 0),
 			Entry("expand scale", "10", "4", "2.50", 2),
@@ -318,12 +303,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Cmp", func(a, b string, r int) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.Cmp(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.Cmp(y)
+			})
 		},
 			Entry("Equal has the same scale", "0", "0", 0),
 			Entry("Equal has different scale", "1.00", "1.000", 0),
@@ -332,12 +314,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("LessThan", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.LT(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.LT(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", false),
 			Entry("less", "0.0", "1.00", true),
@@ -345,12 +324,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("GreaterThan", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.GT(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.GT(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", false),
 			Entry("less", "0.0", "1.00", false),
@@ -358,12 +334,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("LessTharOrEqual", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.LTE(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.LTE(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", true),
 			Entry("less", "0.0", "1.00", true),
@@ -371,12 +344,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("GreaterThanOrEqual", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.GTE(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.GTE(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", true),
 			Entry("less", "0.0", "1.00", false),
@@ -384,12 +354,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("Equal", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.EQ(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.EQ(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", true),
 			Entry("less", "0.0", "1.00", false),
@@ -397,12 +364,9 @@ var _ = Describe("Decimal", func() {
 		)
 
 		DescribeTable("NotEqual", func(a, b string, r bool) {
-			x, err := decimal.FromString(a)
-			Ω(err).Should(Succeed())
-			y, err := decimal.FromString(b)
-			Ω(err).Should(Succeed())
-
-			Ω(x.NE(y)).Should(Equal(r))
+			assertBinOp(a, b, r, func(x, y decimal.Decimal) interface{} {
+				return x.NE(y)
+			})
 		},
 			Entry("Equal", "0.0", "0.00", false),
 			Entry("less", "0.0", "1.00", true),
