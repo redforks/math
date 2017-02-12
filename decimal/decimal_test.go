@@ -373,4 +373,20 @@ var _ = Describe("Decimal", func() {
 			Entry("greater", "0.01", "0.00", true),
 		)
 	})
+
+	It("bson marshal", func() {
+		// bson.Marshal() expected the value is a document, it will fail
+		// if marshal Decimal directly, wrap it inside a struct
+		var v, back struct {
+			V decimal.Decimal
+		}
+
+		Ω(bsonRoundTrip(v, &back)).Should(Succeed())
+		Ω(back).Should(Equal(v))
+
+		v.V, _ = decimal.FromString("3.00")
+		Ω(bsonRoundTrip(v, &back)).Should(Succeed())
+		Ω(back).Should(Equal(v))
+	})
+
 })

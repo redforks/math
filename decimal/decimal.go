@@ -1,9 +1,13 @@
 package decimal
 
 import (
+	"bytes"
 	"database/sql/driver"
+	"encoding/binary"
 	"fmt"
 	"strings"
+
+	"gopkg.in/mgo.v2/bson"
 
 	"strconv"
 )
@@ -305,6 +309,37 @@ func (d Decimal) Value() (driver.Value, error) {
 	return d.String(), nil
 }
 
+// GetBSON implement bson.Getter interface, marshal value to mongoDB.
+// Marshal to string to pressure both scale and value.
+func (d Decimal) GetBSON() (interface{}, error) {
+	data := []byte(d.String())
+
+	buf := bytes.Buffer{}
+	if err := binary.Write(&buf, binary.LittleEndian, int32(len(data)+1)); err != nil {
+		return nil, err
+	}
+
+	_, _ = buf.Write(data)
+	_ = buf.WriteByte(0)
+
+	return bson.Raw{
+		Kind: 2,
+		Data: buf.Bytes(),
+	}, nil
+}
+
+// SetBSON implement bson.Setter interface, marshal value from mongoDB.
+func (d *Decimal) SetBSON(raw bson.Raw) error {
+	if raw.Kind != 2 {
+		panic("Unexpected decimal marshal format")
+	}
+
+	s := string(raw.Data[4 : len(raw.Data)-1])
+	v, err := FromString(s)
+	*d = v
+	return err
+}
+
 // Zero returns zero decimal value with specific scale.
 func Zero(scale int) Decimal {
 	if err := checkScale(scale); err != nil {
@@ -348,3 +383,8 @@ func roundLastDecimalBit(v int64) int64 {
 	}
 	return v
 }
+
+var (
+	_ bson.Getter = Decimal{}
+	_ bson.Setter = &Decimal{}
+)
