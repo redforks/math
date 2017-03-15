@@ -340,6 +340,16 @@ func (d *Decimal) SetBSON(raw bson.Raw) error {
 	return err
 }
 
+func (d Decimal) MarshalJSON() ([]byte, error) {
+	return []byte(d.String()), nil
+}
+
+func (d *Decimal) UnmarshalJSON(buf []byte) error {
+	var err error
+	*d, err = FromString(string(buf))
+	return err
+}
+
 // Zero returns zero decimal value with specific scale.
 func Zero(scale int) Decimal {
 	if err := checkScale(scale); err != nil {

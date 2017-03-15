@@ -1,6 +1,7 @@
 package decimal_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -387,6 +388,15 @@ var _ = Describe("Decimal", func() {
 		v.V, _ = decimal.FromString("3.00")
 		Ω(bsonRoundTrip(v, &back)).Should(Succeed())
 		Ω(back).Should(Equal(v))
+	})
+
+	It("Json marshal", func() {
+		d, err := decimal.FromString("3.30")
+		Ω(err).Should(Succeed())
+		Ω(json.Marshal(d)).Should(Equal([]byte("3.30")))
+
+		d = decimal.Zero(0)
+		Ω(json.Unmarshal([]byte("3.30"), &d)).Should(Succeed())
 	})
 
 })
