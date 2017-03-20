@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"gopkg.in/mgo.v2/bson"
@@ -111,6 +112,16 @@ func (d Decimal) GoString() string {
 	return d.String() + "m"
 }
 
+var rightDotZero *regexp.Regexp
+
+func init() {
+	var err error
+	rightDotZero, err = regexp.Compile(`\.0*$`)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // ShortString convert current value to string, removing ending 0s.
 // Such as 3.00, returns 3.
 func (d Decimal) ShortString() string {
@@ -123,7 +134,7 @@ func (d Decimal) ShortString() string {
 		return r
 	}
 
-	return strings.TrimRight(r, ".0")
+	return rightDotZero.ReplaceAllLiteralString(r, "")
 }
 
 // Scale return scale of this decimal value.
