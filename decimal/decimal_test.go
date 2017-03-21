@@ -102,6 +102,7 @@ var _ = Describe("Decimal", func() {
 		Entry("Zero", "0.00", "0"),
 		Entry("Ten", "10.00", "10"),
 		Entry("Ten 2", "10", "10"),
+		Entry("3.30", "3.30", "3.3"),
 	)
 
 	DescribeTable("FromInt", func(i int64) {

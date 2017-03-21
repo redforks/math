@@ -134,7 +134,13 @@ func (d Decimal) ShortString() string {
 		return r
 	}
 
-	return rightDotZero.ReplaceAllLiteralString(r, "")
+	if strings.ContainsRune(r, '.') {
+		r = strings.TrimRight(r, "0")
+		if r[len(r)-1] == '.' {
+			return r[:len(r)-1]
+		}
+	}
+	return r
 }
 
 // Scale return scale of this decimal value.
