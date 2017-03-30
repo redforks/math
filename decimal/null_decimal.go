@@ -21,6 +21,13 @@ func (d NullDecimal) Value() (driver.Value, error) {
 	return nil, nil
 }
 
+func (d NullDecimal) String() string {
+	if d.Valid {
+		return d.Decimal.String()
+	}
+	return ""
+}
+
 // GetBSON implement bson.Getter interface, marshal value to mongoDB.
 // Marshal to string to pressure both scale and value.
 func (d NullDecimal) GetBSON() (interface{}, error) {

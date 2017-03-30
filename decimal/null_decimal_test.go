@@ -44,6 +44,11 @@ var _ = Describe("NullDecimal", func() {
 		})
 	})
 
+	It("Stringer", func() {
+		Ω(NullDecimal{}.String()).Should(Equal(""))
+		Ω(NullDecimal{FromInt(3), true}.String()).Should(Equal("3"))
+	})
+
 })
 
 // marshal value to bson, then marshal back.
