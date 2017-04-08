@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 
@@ -74,6 +75,14 @@ func FromStringWithScale(str string, scale int) (Decimal, error) {
 
 	// TODO: scale out of range > 10 < 0
 	return Decimal{digits, uint8(scale)}, err
+}
+
+// FromFloat convert float to decimal
+func FromFloat(v float64, scale uint8) Decimal {
+	return Decimal{
+		digits: int64(v * math.Pow10(int(scale))),
+		scale:  scale,
+	}
 }
 
 // String implement fmt.Stringer interface, return decimal value in string format,

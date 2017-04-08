@@ -76,6 +76,18 @@ var _ = Describe("Decimal", func() {
 		Entry("Scale smaller", "3.333", 1, "3.333"),
 	)
 
+	DescribeTable("FromFloat", func(v float64, scale int, exp string) {
+		d := decimal.FromFloat(v, uint8(scale))
+		Ω(d.String()).Should(Equal(exp))
+	},
+		Entry("Zero", 0.0, 0, "0"),
+		Entry("One", 1.0, 0, "1"),
+		Entry("Round", 1.33333, 2, "1.33"),
+		Entry("Round up", 1.66666, 2, "1.66"),
+		Entry("negative", -1.44444, 2, "-1.44"),
+		Entry("scale up", 1.0, 2, "1.00"),
+	)
+
 	It("GoStringer", func() {
 		d, err := decimal.FromString("3.30")
 		Ω(err).Should(Succeed())
