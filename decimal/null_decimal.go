@@ -1,7 +1,9 @@
 package decimal
 
 import (
+	"bytes"
 	"database/sql/driver"
+	"encoding/json"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -55,7 +57,30 @@ func (d *NullDecimal) SetBSON(raw bson.Raw) error {
 	return nil
 }
 
+func (d NullDecimal) MarshalJSON() ([]byte, error) {
+	if !d.Valid {
+		return []byte("null"), nil
+	}
+	return d.Decimal.MarshalJSON()
+}
+
+func (d *NullDecimal) UnmarshalJSON(buf []byte) error {
+	if bytes.Compare(buf, []byte("null")) == 0 {
+		d.Valid = false
+		d.Decimal = Zero(0)
+		return nil
+	}
+
+	if err := d.Decimal.UnmarshalJSON(buf); err != nil {
+		return err
+	}
+	d.Valid = true
+	return nil
+}
+
 var (
-	_ bson.Getter = NullDecimal{}
-	_ bson.Setter = &NullDecimal{}
+	_ bson.Getter      = NullDecimal{}
+	_ bson.Setter      = &NullDecimal{}
+	_ json.Marshaler   = NullDecimal{}
+	_ json.Unmarshaler = &NullDecimal{}
 )

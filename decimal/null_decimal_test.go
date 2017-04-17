@@ -1,6 +1,8 @@
 package decimal_test
 
 import (
+	"encoding/json"
+
 	. "github.com/redforks/math/decimal"
 	"gopkg.in/mgo.v2/bson"
 
@@ -47,6 +49,20 @@ var _ = Describe("NullDecimal", func() {
 	It("Stringer", func() {
 		Ω(NullDecimal{}.String()).Should(Equal(""))
 		Ω(NullDecimal{FromInt(3), true}.String()).Should(Equal("3"))
+	})
+
+	It("Json marshal", func() {
+		d, err := FromString("3.30")
+		Ω(err).Should(Succeed())
+		Ω(json.Marshal(NullDecimal{d, true})).Should(BeEquivalentTo("3.30"))
+		Ω(json.Marshal(NullDecimal{d, false})).Should(BeEquivalentTo("null"))
+
+		v := NullDecimal{FromInt(100), false}
+		Ω(json.Unmarshal([]byte("3.30"), &v)).Should(Succeed())
+		Ω(v).Should(Equal(NullDecimal{d, true}))
+
+		Ω(json.Unmarshal([]byte("null"), &v)).Should(Succeed())
+		Ω(v).Should(Equal(NullDecimal{Zero(0), false}))
 	})
 
 })
