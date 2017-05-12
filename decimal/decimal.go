@@ -335,35 +335,86 @@ func (d Decimal) Value() (driver.Value, error) {
 	return d.String(), nil
 }
 
+// ToDecimal128 convert to IEEE 754 decimal128
+func (d Decimal) ToDecimal128() (low, high uint64) {
+	sign := d.Sign()
+	if sign < 0 {
+		low = uint64(-d.digits)
+	} else {
+		low = uint64(d.digits)
+	}
+
+	high = 6176 - uint64(d.scale)
+	high <<= 49
+	if sign < 0 {
+		high |= 0x8000000000000000
+	}
+	return
+}
+
+// FromDecimal128 convert IEEE 754 decimal128 to Decimal. Decimal128 has greater range than Decimal,
+// FromDecimal128 expect the argument must in range of Decimal.
+func FromDecimal128(low, high uint64) Decimal {
+	high >>= 46
+	neg := (high & 0x20000) != 0
+	scale := high & 0x1ffff
+	is11 := (high & 0x18000) == 0x18000
+	if !is11 {
+		scale >>= 3
+	} else {
+		panic("FromDecimal128 not support scale start with 11")
+	}
+
+	scale = -(scale - 6176)
+	if scale > 10 || scale < 0 {
+		panic("FromDecimal128 scale out of range")
+	}
+
+	digits := int64(low)
+	if neg {
+		digits = -digits
+	}
+	return Decimal{
+		digits: digits,
+		scale:  uint8(scale),
+	}
+}
+
 // GetBSON implement bson.Getter interface, marshal value to mongoDB.
 // Marshal to string to pressure both scale and value.
 func (d Decimal) GetBSON() (interface{}, error) {
-	data := []byte(d.String())
+	low, high := d.ToDecimal128()
 
-	buf := bytes.Buffer{}
-	if err := binary.Write(&buf, binary.LittleEndian, int32(len(data)+1)); err != nil {
+	buf := bytes.NewBuffer(make([]byte, 0, 16))
+	if err := binary.Write(buf, binary.LittleEndian, low); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(buf, binary.LittleEndian, high); err != nil {
 		return nil, err
 	}
 
-	_, _ = buf.Write(data)
-	_ = buf.WriteByte(0)
-
 	return bson.Raw{
-		Kind: 2,
+		Kind: 19,
 		Data: buf.Bytes(),
 	}, nil
 }
 
 // SetBSON implement bson.Setter interface, marshal value from mongoDB.
 func (d *Decimal) SetBSON(raw bson.Raw) error {
-	if raw.Kind != 2 {
+	if raw.Kind != 19 {
 		panic("Unexpected decimal marshal format")
 	}
 
-	s := string(raw.Data[4 : len(raw.Data)-1])
-	v, err := FromString(s)
-	*d = v
-	return err
+	buf := bytes.NewBuffer(raw.Data)
+	low, high := uint64(0), uint64(0)
+	if err := binary.Read(buf, binary.LittleEndian, &low); err != nil {
+		return err
+	}
+	if err := binary.Read(buf, binary.LittleEndian, &high); err != nil {
+		return err
+	}
+	*d = FromDecimal128(low, high)
+	return nil
 }
 
 func (d Decimal) MarshalJSON() ([]byte, error) {

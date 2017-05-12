@@ -3,6 +3,7 @@ package decimal_test
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strconv"
 
 	. "github.com/onsi/ginkgo"
@@ -412,6 +413,44 @@ var _ = Describe("Decimal", func() {
 
 		d = decimal.Zero(0)
 		Ω(json.Unmarshal([]byte("3.30"), &d)).Should(Succeed())
+	})
+
+	Context("decimal128", func() {
+
+		DescribeTable("ToDecimal128", func(d decimal.Decimal, expLow, expHigh uint64) {
+			low, high := d.ToDecimal128()
+			Ω(low).Should(Equal(expLow))
+			Ω(high).Should(Equal(expHigh))
+		},
+			Entry("Zero", decimal.Zero(0), uint64(0), uint64(0x3040000000000000)),
+			Entry("Zero scale 2", decimal.Zero(2), uint64(0), uint64(0x303c000000000000)),
+			Entry("One", decimal.FromInt(1), uint64(1), uint64(0x3040000000000000)),
+			Entry("Negtative one", decimal.FromInt(-1), uint64(1), uint64(0xb040000000000000)),
+		)
+
+		DescribeTable("Round trip", func(s string) {
+			d, err := decimal.FromString(s)
+			Ω(err).Should(Succeed())
+			low, high := d.ToDecimal128()
+			back := decimal.FromDecimal128(low, high)
+			Ω(back).Should(Equal(d))
+		},
+			Entry("Zero", "0"),
+			Entry("Zero scale 2", "0.00"),
+			Entry("One", "1"),
+			Entry("Negative one", "-1"),
+		)
+
+		It("Random round trip", func() {
+			for i := 0; i < 100; i++ {
+				scale := rand.Intn(9)
+				d, err := decimal.FromStringWithScale(strconv.FormatFloat(rand.Float64()*float64(rand.Int31()), 'f', scale, 64), scale)
+				Ω(err).Should(Succeed())
+				low, high := d.ToDecimal128()
+				back := decimal.FromDecimal128(low, high)
+				Ω(back).Should(Equal(d))
+			}
+		})
 	})
 
 })
