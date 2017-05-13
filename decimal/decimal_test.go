@@ -428,6 +428,28 @@ var _ = Describe("Decimal", func() {
 			Entry("Negtative one", decimal.FromInt(-1), uint64(1), uint64(0xb040000000000000)),
 		)
 
+		DescribeTable("FromDecimal128", func(low, high uint64, decStr string) {
+			exp, err := decimal.FromString(decStr)
+			Ω(err).Should(Succeed())
+			d := decimal.FromDecimal128(low, high)
+			Ω(d).Should(Equal(exp))
+		},
+			Entry("digits in range", uint64(0x1234567890123456), uint64(0x3040000000000000), "1311768467284833366"),
+			// TODO
+			XEntry("too many digits only use low", uint64(0x8234567890123456), uint64(0x303e000000000000), "938221899953276219"),
+		)
+
+		DescribeTable("FromDecimal128 out of range", func(low, high uint64) {
+			Ω(func() {
+				decimal.FromDecimal128(low, high)
+			}).Should(Panic())
+		},
+			Entry("too big", uint64(0x8234567890123456), uint64(0x3040000000000000)),
+			Entry("scale too large", uint64(0), uint64(0x3042000000000000)),
+			Entry("scale too small", uint64(0), uint64(0x302e000000000000)),
+			Entry("Two big uses high", uint64(0), uint64(0x3040010000000000)),
+		)
+
 		DescribeTable("Round trip", func(s string) {
 			d, err := decimal.FromString(s)
 			Ω(err).Should(Succeed())

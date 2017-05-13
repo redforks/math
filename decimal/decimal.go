@@ -352,9 +352,17 @@ func (d Decimal) ToDecimal128() (low, high uint64) {
 	return
 }
 
+const (
+	maxVal int64 = 1<<63 - 1
+)
+
 // FromDecimal128 convert IEEE 754 decimal128 to Decimal. Decimal128 has greater range than Decimal,
 // FromDecimal128 expect the argument must in range of Decimal.
 func FromDecimal128(low, high uint64) Decimal {
+	if high&0x3fffffffffff != 0 {
+		panic("FromDecimal128 value too big 2")
+	}
+
 	high >>= 46
 	neg := (high & 0x20000) != 0
 	scale := high & 0x1ffff
@@ -366,8 +374,11 @@ func FromDecimal128(low, high uint64) Decimal {
 	}
 
 	scale = -(scale - 6176)
-	if scale > 10 || scale < 0 {
+	if scale > 8 || scale < 0 {
 		panic("FromDecimal128 scale out of range")
+	}
+	if low > uint64(maxVal) {
+		panic("FromDecimal128 value too big")
 	}
 
 	digits := int64(low)
