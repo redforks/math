@@ -144,6 +144,17 @@ var _ = Describe("Decimal", func() {
 		Entry("Round up negative", "-3.5", int64(-4)),
 	)
 
+	DescribeTable("Float64", func(sVal string, fVal float64) {
+		d, err := decimal.FromString(sVal)
+		Ω(err).Should(Succeed())
+
+		Ω(d.Float64()).Should(Equal(fVal))
+	},
+		Entry("0", "0", 0.0),
+		Entry("Integer", "1000", 1000.0),
+		Entry("decimal", "-1.456", -1.456),
+	)
+
 	Context("Compute", func() {
 
 		DescribeTable("Negate", func(s, exp string) {

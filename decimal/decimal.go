@@ -168,6 +168,14 @@ func (d Decimal) Int64() int64 {
 	return roundLastDecimalBit(r)
 }
 
+// Float64 convert current value to float.
+func (d Decimal) Float64() float64 {
+	if d.scale == 0 {
+		return float64(d.digits)
+	}
+	return float64(d.digits) / math.Pow10(int(d.scale))
+}
+
 // Round decimal to specific scale.
 func (d Decimal) Round(scale int) Decimal {
 	if err := checkScale(scale); err != nil {
