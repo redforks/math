@@ -21,7 +21,7 @@ var _ = bdd.Describe("limiter", func() {
 		reset.Disable()
 	})
 
-	bdd.XIt("Accept one", func() {
+	bdd.It("Accept one", func() {
 		l := NewLimiter(1, 10*time.Second)
 		assert.True(t(), l.Accept())
 
