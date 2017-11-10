@@ -1,13 +1,13 @@
-package rate
+package rate_test
 
 import (
-	"github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"testing"
 )
 
-var t = ginkgo.GinkgoT
-
 func TestRate(t *testing.T) {
-	ginkgo.RunSpecs(t, "Rate Suite")
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Rate Suite")
 }
