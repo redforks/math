@@ -420,20 +420,38 @@ func (d Decimal) GetBSON() (interface{}, error) {
 
 // SetBSON implement bson.Setter interface, marshal value from mongoDB.
 func (d *Decimal) SetBSON(raw bson.Raw) error {
-	if raw.Kind != 19 {
+	buf := bytes.NewBuffer(raw.Data)
+	switch raw.Kind {
+	case 16:
+		var v int32
+		if err := binary.Read(buf, binary.LittleEndian, &v); err != nil {
+			return err
+		}
+		*d = FromInt(int64(v))
+		return nil
+
+	case 18:
+		var v int64
+		if err := binary.Read(buf, binary.LittleEndian, &v); err != nil {
+			return err
+		}
+		*d = FromInt(int64(v))
+		return nil
+
+	case 19:
+		low, high := uint64(0), uint64(0)
+		if err := binary.Read(buf, binary.LittleEndian, &low); err != nil {
+			return err
+		}
+		if err := binary.Read(buf, binary.LittleEndian, &high); err != nil {
+			return err
+		}
+		*d = FromDecimal128(low, high)
+		return nil
+
+	default:
 		panic("Unexpected decimal marshal format")
 	}
-
-	buf := bytes.NewBuffer(raw.Data)
-	low, high := uint64(0), uint64(0)
-	if err := binary.Read(buf, binary.LittleEndian, &low); err != nil {
-		return err
-	}
-	if err := binary.Read(buf, binary.LittleEndian, &high); err != nil {
-		return err
-	}
-	*d = FromDecimal128(low, high)
-	return nil
 }
 
 func (d Decimal) MarshalJSON() ([]byte, error) {

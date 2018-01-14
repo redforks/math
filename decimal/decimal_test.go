@@ -1,10 +1,14 @@
 package decimal_test
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
+
+	"gopkg.in/mgo.v2/bson"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -472,6 +476,34 @@ var _ = Describe("Decimal", func() {
 			Entry("Zero scale 2", "0.00"),
 			Entry("One", "1"),
 			Entry("Negative one", "-1"),
+		)
+
+		var (
+			valToBson = func(kind byte, v interface{}) bson.Raw {
+				var buf bytes.Buffer
+				binary.Write(&buf, binary.LittleEndian, v)
+				return bson.Raw{
+					Kind: 16,
+					Data: buf.Bytes(),
+				}
+			}
+
+			int32ToBson = func(v int32) bson.Raw {
+				return valToBson(16, v)
+			}
+
+			int64ToBson = func(v int64) bson.Raw {
+				return valToBson(18, v)
+			}
+		)
+
+		DescribeTable("From bson number types", func(raw bson.Raw, exp decimal.Decimal) {
+			var d decimal.Decimal
+			Ω(d.SetBSON(raw)).Should(Succeed())
+			Ω(d).Should(Equal(exp))
+		},
+			Entry("int32", int32ToBson(-1234567890), decimal.FromInt(-1234567890)),
+			XEntry("int64", int64ToBson(12345678901234), decimal.FromInt(12345678901234)),
 		)
 
 		It("Random round trip", func() {
