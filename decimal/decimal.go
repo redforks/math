@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"math"
 	"regexp"
 	"strings"
@@ -450,7 +451,9 @@ func (d *Decimal) SetBSON(raw bson.Raw) error {
 		return nil
 
 	default:
-		panic("Unexpected decimal marshal format")
+		log.Printf("[%s] Unexpected decimal marshal format: %d", tag, raw.Kind)
+		*d = Zero(2)
+		return nil
 	}
 }
 
